@@ -6,7 +6,7 @@ const {
 } = Schema;
 
 const chatSchema = new Schema({
-  content: {
+  message: {
     type: String,
     required: true
   },
@@ -15,6 +15,11 @@ const chatSchema = new Schema({
     required: true,
     ref: "User"
   },
+  // room_id: {
+  //   type: ObjectId,
+  //   required: true,
+  //   ref: "Room"
+  // },
   createdAt: {
     type: Date,
     default: Date.now
