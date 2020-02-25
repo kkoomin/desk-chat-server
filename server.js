@@ -4,7 +4,7 @@ const socketio = require("socket.io");
 
 const userRouter = require("./routes/userRouter");
 const chatRouter = require("./routes/chatRouter");
-// const roomRouter = require("./routes/roomRouter");
+const roomRouter = require("./routes/roomRouter");
 
 const connect = require("./schemas");
 const cors = require("cors");
@@ -25,7 +25,7 @@ app.use(cors());
 // Routers
 app.use("/user", userRouter);
 app.use("/chat", chatRouter);
-// app.use("/room", roomRouter);
+app.use("/room", roomRouter);
 
 // DB Connection
 connect();
@@ -34,12 +34,23 @@ connect();
 io.on("connection", socket => {
   console.log("Socket Connected!!");
 
-  //   socket.on("JOIN", () => {});
-  //   io.broadcast.emit("RECEIVE", "A new user has joined!");
+  socket.on("JOIN", roomData => {
+    // Join the room
+    socket.join(roomData.room);
+    // Welcome the user to the room
+    // io.emit("RECEIVE", { data: "Welcome!" });
+    // Broadcast an event to everyone in the room
+    const joinMessage = {
+      name: "Admin",
+      message: `${roomData.username} has joined!`,
+      createdAt: ""
+    };
+    socket.broadcast.to(roomData.room).emit("RECEIVE", joinMessage);
 
-  socket.on("SEND", data => {
-    io.emit("RECEIVE", data);
-    console.log("===========message send to everyone============");
+    socket.on("SEND", data => {
+      io.to(roomData.room).emit("RECEIVE", data);
+      console.log("===========message send to everyone============");
+    });
   });
 });
 

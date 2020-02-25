@@ -1,6 +1,9 @@
 const mongoose = require("mongoose");
 
 const { Schema } = mongoose;
+const {
+  Types: { ObjectId }
+} = Schema;
 
 const userSchema = new Schema({
   email: {
@@ -16,6 +19,10 @@ const userSchema = new Schema({
     type: String,
     required: true,
     unique: true
+  },
+  room_id: {
+    type: ObjectId,
+    ref: "Room"
   },
   createdAt: {
     type: Date,

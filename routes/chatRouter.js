@@ -8,11 +8,12 @@ router.post("/addChat", async (req, res) => {
     const chat = new Chat({
       message: req.body.chat.message,
       author: req.body.chat.author,
-      createdAt: req.body.chat.createdAt
-      //   room_id: req.body.chat.room_id
+      createdAt: req.body.chat.createdAt,
+      room_id: req.body.chat.room_id
     });
     const result = await chat.save();
     Chat.populate(result, { path: "author" });
+    // Chat.populate(result, { path: "room_id" });
     console.log(result);
     // res.json({ message: "메세지 저장성공" });
     res.send();
@@ -21,9 +22,11 @@ router.post("/addChat", async (req, res) => {
   }
 });
 
-router.get("/getChats", async (req, res) => {
+router.post("/getChats", async (req, res) => {
   try {
-    const chats = await Chat.find({}).populate("author");
+    const chats = await Chat.find({ room_id: req.body.room_id }).populate(
+      "author"
+    );
     res.json({ chats });
   } catch (err) {
     console.log(err);

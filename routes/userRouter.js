@@ -35,4 +35,8 @@ router.post("/signup", async (req, res) => {
   }
 });
 
+router.post("/updateUserRoom", async (req, res) => {
+  console.log(`-----${req.body.userId} + ${req.body.roomId}`);
+});
+
 module.exports = router;

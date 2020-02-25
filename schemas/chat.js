@@ -15,11 +15,11 @@ const chatSchema = new Schema({
     required: true,
     ref: "User"
   },
-  // room_id: {
-  //   type: ObjectId,
-  //   required: true,
-  //   ref: "Room"
-  // },
+  room_id: {
+    type: ObjectId,
+    required: true,
+    ref: "Room"
+  },
   createdAt: {
     type: Date,
     require: true
