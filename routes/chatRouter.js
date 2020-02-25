@@ -7,7 +7,8 @@ router.post("/addChat", async (req, res) => {
     // console.log(req.body.chat);
     const chat = new Chat({
       message: req.body.chat.message,
-      author: req.body.chat.author
+      author: req.body.chat.author,
+      createdAt: req.body.chat.createdAt
       //   room_id: req.body.chat.room_id
     });
     const result = await chat.save();
