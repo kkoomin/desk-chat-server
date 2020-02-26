@@ -20,10 +20,10 @@ const userSchema = new Schema({
     required: true,
     unique: true
   },
-  room_id: {
-    type: ObjectId,
-    ref: "Room"
-  },
+  // room_id: {
+  //   type: ObjectId,
+  //   ref: "Room"
+  // },
   createdAt: {
     type: Date,
     default: Date.now

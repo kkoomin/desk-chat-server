@@ -7,6 +7,7 @@ const chatRouter = require("./routes/chatRouter");
 const roomRouter = require("./routes/roomRouter");
 
 const connect = require("./schemas");
+const User = require("./schemas/user");
 const cors = require("cors");
 
 const app = express();
@@ -30,27 +31,66 @@ app.use("/room", roomRouter);
 // DB Connection
 connect();
 
+// Current Users
+let users = [];
+
 // Chat Connection
 io.on("connection", socket => {
   console.log("Socket Connected!!");
+  console.log(`User Connected with id: ${socket.client.id}`);
+  console.log("--------------------------------");
 
-  socket.on("JOIN", roomData => {
-    // Join the room
-    socket.join(roomData.room);
-    // Welcome the user to the room
-    // io.emit("RECEIVE", { data: "Welcome!" });
-    // Broadcast an event to everyone in the room
+  //   console.log(socket.id);
+  socket.on("JOIN", async ({ username, roomCode }) => {
+    socket.join(roomCode);
+    console.log(roomCode);
+
     const joinMessage = {
       name: "Admin",
-      message: `${roomData.username} has joined!`,
+      message: `${username} has joined!`,
       createdAt: ""
     };
-    socket.broadcast.to(roomData.room).emit("RECEIVE", joinMessage);
+    socket.broadcast.to(roomCode).emit("RECEIVE", joinMessage);
 
-    socket.on("SEND", data => {
-      io.to(roomData.room).emit("RECEIVE", data);
-      console.log("===========message send to everyone============");
-    });
+    // Make room user list //
+    const user = await User.find({ name: username });
+    const userObj = { id: socket.id, name: user[0].name, room: roomCode };
+    users.push(userObj); // add new socket user
+    io.to(roomCode).emit("ROOMUSERS", users);
+    // ------------------ //
+  });
+
+  socket.on("SEND", data => {
+    io.to(data.roomCode).emit("RECEIVE", data);
+    console.log(data);
+    console.log(
+      `===========message send to everyone in ${data.roomCode}============`
+    );
+  });
+
+  socket.on("EXIT", function(roomCode) {
+    socket.leave(roomCode);
+    io.to(roomCode).emit("RECEIVE", { message: "user disconnected" });
+  });
+
+  socket.on("disconnect", () => {
+    console.log(`disconnected!: ${socket.client.id}`);
+
+    const removeUser = id => {
+      const index = users.findIndex(user => user.id === id);
+
+      if (index !== -1) {
+        return users.splice(index, 1)[0];
+      }
+    };
+
+    const user = removeUser(socket.client.id);
+    if (user) {
+      users = users.filter(user => user.id !== socket.client.id);
+      io.to(user.room).emit("ROOMUSERS", users);
+
+      io.emit("RECEIVE", { message: "A user has left and disconnected!" });
+    }
   });
 });
 
