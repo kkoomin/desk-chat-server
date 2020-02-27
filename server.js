@@ -70,6 +70,7 @@ io.on("connection", socket => {
     };
 
     const user = removeUser(socket.client.id);
+
     if (user) {
       users = users.filter(user => user.id !== socket.client.id);
       io.to(user.room).emit("ROOMUSERS", users);

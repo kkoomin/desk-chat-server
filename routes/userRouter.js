@@ -21,13 +21,12 @@ router.post("/login", async (req, res) => {
 
 router.post("/signup", async (req, res) => {
   try {
-    console.log(req.body.user);
     const user = new User({
       email: req.body.user.email,
       password: req.body.user.password,
       name: req.body.user.name
     });
-    const result = await user.save();
+    await user.save();
     res.json({ message: "✅ 회원가입 되었습니다." });
   } catch (err) {
     console.error(err);

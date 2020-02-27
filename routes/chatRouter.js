@@ -4,7 +4,6 @@ const Chat = require("../schemas/chat");
 
 router.post("/addChat", async (req, res) => {
   try {
-    // console.log(req.body.chat);
     const chat = new Chat({
       message: req.body.chat.message,
       author: req.body.chat.author,
@@ -13,9 +12,6 @@ router.post("/addChat", async (req, res) => {
     });
     const result = await chat.save();
     Chat.populate(result, { path: "author" });
-    // Chat.populate(result, { path: "room_id" });
-    console.log(result);
-    // res.json({ message: "메세지 저장성공" });
     res.send();
   } catch (err) {
     console.log(err);
