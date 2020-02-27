@@ -17,10 +17,6 @@ const io = socketio(server);
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  next();
-});
 app.use(cors());
 
 // Routers
@@ -33,6 +29,9 @@ connect();
 
 // Current Users
 let users = [];
+const getRoomUsers = roomCode => {
+  return users.filter(user => user.room === roomCode);
+};
 
 // Chat Connection
 io.on("connection", socket => {
@@ -40,37 +39,23 @@ io.on("connection", socket => {
   console.log(`User Connected with id: ${socket.client.id}`);
   console.log("--------------------------------");
 
-  //   console.log(socket.id);
   socket.on("JOIN", async ({ username, roomCode }) => {
     socket.join(roomCode);
-    console.log(roomCode);
-
-    const joinMessage = {
-      name: "Admin",
-      message: `${username} has joined!`,
-      createdAt: ""
-    };
-    socket.broadcast.to(roomCode).emit("RECEIVE", joinMessage);
 
     // Make room user list //
     const user = await User.find({ name: username });
     const userObj = { id: socket.id, name: user[0].name, room: roomCode };
     users.push(userObj); // add new socket user
-    io.to(roomCode).emit("ROOMUSERS", users);
+    io.to(roomCode).emit("ROOMUSERS", getRoomUsers(roomCode));
     // ------------------ //
   });
 
   socket.on("SEND", data => {
     io.to(data.roomCode).emit("RECEIVE", data);
-    console.log(data);
-    console.log(
-      `===========message send to everyone in ${data.roomCode}============`
-    );
   });
 
   socket.on("EXIT", function(roomCode) {
     socket.leave(roomCode);
-    io.to(roomCode).emit("RECEIVE", { message: "user disconnected" });
   });
 
   socket.on("disconnect", () => {
@@ -88,8 +73,6 @@ io.on("connection", socket => {
     if (user) {
       users = users.filter(user => user.id !== socket.client.id);
       io.to(user.room).emit("ROOMUSERS", users);
-
-      io.emit("RECEIVE", { message: "A user has left and disconnected!" });
     }
   });
 });
