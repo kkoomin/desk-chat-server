@@ -25,7 +25,22 @@ router.post("/getRoom", async (req, res) => {
     }
   } catch (err) {
     console.error(err);
-    res.json({ message: false });
+    res.json({ status: false, message: "방을 생성할 수 없습니다." });
+  }
+});
+
+router.get("/:roomCode", async (req, res) => {
+  try {
+    const room = await Room.find(
+      {
+        code: req.params.roomCode
+      },
+      { title: 1 }
+    );
+    res.json(room[0]);
+  } catch (err) {
+    console.log(err);
+    res.json({ status: false });
   }
 });
 
