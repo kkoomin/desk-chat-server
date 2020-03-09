@@ -6,7 +6,7 @@ module.exports = () => {
       mongoose.set("debug", true);
     }
     mongoose.connect(
-      "mongodb://localhost:27017/desk-chat",
+      "mongodb://70.12.225.186:27017/desk-chat",
       { dbName: "desk-chat" },
       err => {
         if (err) {
