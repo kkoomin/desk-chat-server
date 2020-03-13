@@ -1,18 +1,64 @@
 const http = require("http");
 const express = require("express");
 const socketio = require("socket.io");
+const dotenv = require("dotenv");
+const mongoose = require("mongoose");
+
+dotenv.config({ path: "./config.env" });
 
 const userRouter = require("./routes/userRouter");
 const chatRouter = require("./routes/chatRouter");
 const roomRouter = require("./routes/roomRouter");
 
-const connect = require("./schemas");
-const User = require("./schemas/user");
 const cors = require("cors");
 
 const app = express();
+
 const server = http.createServer(app);
 const io = socketio(server);
+
+const socketController = require("./socketController.js");
+
+// const DB = process.env.DATABASE.replace(
+//   "<password>",
+//   process.env.DATABASE_PASSWORD
+// );
+const DB = process.env.DATABASE_LOCAL;
+
+// DB Connection
+const connectDB = () => {
+  if (process.env.NODE_ENV !== "production") {
+    mongoose.set("debug", true);
+  }
+  mongoose.connect(
+    DB,
+    {
+      dbName: "desk-chat",
+      useNewUrlParser: true,
+      useCreateIndex: true,
+      useFindAndModify: false,
+      useUnifiedTopology: true
+    },
+    error => {
+      if (error) {
+        console.log("MongoDB connection lost", error);
+      } else {
+        console.log("MongoDB Connected! 😁");
+      }
+    }
+  );
+};
+
+connectDB();
+
+// Control DB Connection Error
+mongoose.connection.on("error", error => {
+  console.error("MongoDB connection error : ", error);
+});
+mongoose.connection.on("disconnected", () => {
+  console.error("MongoDB connection lost, retry connect.");
+  connectDB();
+});
 
 // Middleware
 app.use(express.json());
@@ -24,58 +70,9 @@ app.use("/user", userRouter);
 app.use("/chat", chatRouter);
 app.use("/room", roomRouter);
 
-// DB Connection
-connect();
-
-// Current Users
-let users = [];
-const getRoomUsers = roomCode => {
-  return users.filter(user => user.room === roomCode);
-};
-
 // Chat Connection
 io.on("connection", socket => {
-  console.log("Socket Connected!!");
-  console.log(`User Connected with id: ${socket.client.id}`);
-  console.log("--------------------------------");
-
-  socket.on("JOIN", async ({ username, roomCode }) => {
-    socket.join(roomCode);
-
-    // Make room user list //
-    const user = await User.find({ name: username });
-    const userObj = { id: socket.id, name: user[0].name, room: roomCode };
-    users.push(userObj); // add new socket user
-    io.to(roomCode).emit("ROOMUSERS", getRoomUsers(roomCode));
-    // ------------------ //
-  });
-
-  socket.on("SEND", data => {
-    io.to(data.roomCode).emit("RECEIVE", data);
-  });
-
-  socket.on("EXIT", function(roomCode) {
-    socket.leave(roomCode);
-  });
-
-  socket.on("disconnect", () => {
-    console.log(`disconnected!: ${socket.client.id}`);
-
-    const removeUser = id => {
-      const index = users.findIndex(user => user.id === id);
-
-      if (index !== -1) {
-        return users.splice(index, 1)[0];
-      }
-    };
-
-    const user = removeUser(socket.client.id);
-
-    if (user) {
-      users = users.filter(user => user.id !== socket.client.id);
-      io.to(user.room).emit("ROOMUSERS", users);
-    }
-  });
+  socketController(socket, io);
 });
 
 // Web Server
