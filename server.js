@@ -71,8 +71,12 @@ app.use("/chat", chatRouter);
 app.use("/room", roomRouter);
 
 // Chat Connection
+
+// Current Users
+const users = [];
+
 io.on("connection", socket => {
-  socketController(socket, io);
+  socketController(socket, io, users);
 });
 
 // Web Server

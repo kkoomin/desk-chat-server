@@ -1,18 +1,16 @@
 const User = require("./schemas/user");
 
-const socketController = (socket, io) => {
+const socketController = (socket, io, users) => {
   console.log("Socket Connected!!");
   console.log(`User Connected with id: ${socket.client.id}`);
   console.log("--------------------------------");
 
-  // Current Users
-  const users = [];
-  const getRoomUsers = roomCode => {
-    return users.filter(user => user.room === roomCode);
-  };
-
   socket.on("JOIN", async ({ username, roomCode }) => {
     socket.join(roomCode);
+
+    const getRoomUsers = roomCode => {
+      return users.filter(user => user.room === roomCode);
+    };
 
     // Make room user list //
     const user = await User.find({ name: username });
